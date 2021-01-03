@@ -130,12 +130,10 @@ defmodule NewLog do
           {:ok, _f} = delete_stale_current_dir(current_week_str, opts)
           # make new 'current' dir for this week
           {:ok, new_dir} = build_new_week_folder(current_week_num)
-          # new week path
-          new_dir_path = path(new_dir)
           # generate template
           template = template(new_log_filename, datetime, todo_list)
           # save template to new directory
-          add_file(new_dir_path, new_log_filename, template)
+          add_file(new_dir, new_log_filename, template)
         true ->
           IO.puts "An unknown case occured."
       end
@@ -237,9 +235,15 @@ defmodule NewLog do
     |> List.last
   end
 
-  def current_week(time) do
-    time.calendar.day_of_year(time.year, time.month, time.day)
-    |> div(7) # divide by seven days
+  def current_week(time) do # first week is week one
+    doy = time.calendar.day_of_year(time.year, time.month, time.day)
+    dow = time.calendar.day_of_week(time.year, time.month, time.day)
+    week_num = div(doy + 6, 7)
+
+    jan1 = get_local_time("2021-01-01")
+    jan1_dow = time.calendar.day_of_week(jan1.year, jan1.month, jan1.day)
+
+    if dow < jan1_dow, do: week_num + 1, else: week_num
   end
 
   def build_new_week_folder(week_num) do
