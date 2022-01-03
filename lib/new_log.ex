@@ -72,8 +72,15 @@ defmodule NewLog do
     with {opts, _raw_args, _} <- OptionParser.parse(args, @options),
          #get date - in UTC, and then offset to SYD TZ.
          datetime <- get_local_time(opts[:date]),
+         # This needs an update. This path only works from this specific location,
+         # Any other use has a different path to the docs location, so it needs
+         # to be added recursively.
+         # step back with File.cp, check for Dir 'Documents' - first step of target_dir.
+         # When there, then you can use the ls command, just positive.
+         #
          # TOP [".DS_Store", "test", "current-week-53", "special", "history"]
-         {:ok, directory_contents} <- File.ls(@target_from_loc),
+         {:ok, directory_contents} <- navigate_to_path(@target_from_loc),
+         # {:ok, directory_contents} <- File.ls(@target_from_loc),
          # find current_directory - should only be one.
          current_week_str <- target_current_week(directory_contents),
          # isolate current_week number from file name.
@@ -114,20 +121,28 @@ defmodule NewLog do
           # save template to current directory
           |> add_file(new_log_filename, template)
 
-        current_week_num == 0 || current_week_num > stale_week_num ->
-          if current_week_num == 0 do
-            IO.puts "Happy new year!"
-          end
-          # old week path
-          existing_path = path(current_week_str)
-          # archive path (to save to)
-          archive_path = build_archive_folder_path(datetime, stale_week_num)
-          # make archive folder
-          File.mkdir!(archive_path)
-          # copy files from old to new location
-          File.cp_r!(existing_path, archive_path)
-          # delete old current directory
-          {:ok, _f} = delete_stale_current_dir(current_week_str, opts)
+          IO.puts "Adding #{new_log_filename} to #{current_week_str}"
+
+        # This has been updated in Jan 2022 because the late start. Previous years I started back in the first week.
+        # Currently this hacks for the start of the year, but it should be updated to handle the discrepancy.
+        # It also didn't know to make a year folder, so that needed manual intervention.
+        current_week_num in [0, 1, 2] && (current_week_num + 10) < stale_week_num ->
+          IO.puts "Happy new year!"
+          # build new year folder
+          path(["history", "#{datetime.year}"])
+          |> File.mkdir!()
+
+          {:ok, _f} = archive_week(stale_week_num, current_week_str, datetime, opts)
+          # new current dir for this week.
+          {:ok, new_dir} = build_new_week_folder(current_week_num)
+          # generate template
+          template = template(new_log_filename, datetime, todo_list)
+          # save template to new directory
+          add_file(new_dir, new_log_filename, template)
+          # Add a new year archive folder
+        current_week_num > stale_week_num ->
+          IO.puts "New week! #{format_date(datetime)}"
+          {:ok, _f} = archive_week(stale_week_num, current_week_str, datetime, opts)
           # make new 'current' dir for this week
           {:ok, new_dir} = build_new_week_folder(current_week_num)
           # generate template
@@ -140,6 +155,34 @@ defmodule NewLog do
     else
       error -> IO.inspect(error, label: "Error")
     end
+  end
+
+  defp archive_week(stale_week_num, current_week_str, datetime, opts) do
+    # old week path
+    existing_path = path(current_week_str)
+    # archive path (to save to)
+    archive_path = build_archive_folder_path(datetime, stale_week_num)
+    # make archive folder
+    File.mkdir!(archive_path)
+    # copy files from old to new location
+    File.cp_r!(existing_path, archive_path)
+    # delete old current directory
+    delete_stale_current_dir(current_week_str, opts)
+  end
+
+  def navigate_to_path(path) do
+    # rp path: ../../../Documents/sendle/dev_log
+    # test path: "priv"
+    [root_dir| _rest] = String.split(path)
+    cond do
+      File.dir?(root_dir) -> File.ls(path)
+      File.dir?("Users") -> # Deepest point
+        {:error, "file not found"}
+      true ->
+        File.cd("..")
+        navigate_to_path(path)
+    end
+    # TOP [".DS_Store", "test", "current-week-53", "special", "history"]
   end
 
   def get_todos(string_data) do

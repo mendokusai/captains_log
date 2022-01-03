@@ -38,4 +38,34 @@ defmodule NewLog.Test do
       File.rm_rf!(archive_path)
     end)
   end
+
+  test "priv path navigation" do
+    assert NewLog.navigate_to_path("priv") == {:ok, ["history", "current-week-02"]}
+
+    on_exit(fn ->
+      NewLog.navigate_to_path("Code/elixir/new_log")
+    end)
+  end
+
+  test "local navigation" do
+    assert NewLog.navigate_to_path("Documents/sendle/dev_log") == {:ok,
+ [".DS_Store", "test", "special", "history",
+  "current-week-02"]}
+
+    on_exit(fn ->
+      NewLog.navigate_to_path("Code/elixir/new_log")
+    end)
+  end
+
+  test "Destop location" do
+    File.cd("../../../Desktop")
+
+    assert NewLog.navigate_to_path("Documents/sendle/dev_log") == {:ok,
+ [".DS_Store", "test", "special", "history",
+  "current-week-02"]}
+
+    on_exit(fn ->
+      NewLog.navigate_to_path("Code/elixir/new_log")
+    end)
+  end
 end
