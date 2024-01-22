@@ -1,8 +1,10 @@
 defmodule NewLog do
-
-  @target_from_loc Application.fetch_env!(:new_log, :path)
-  @syd_shift 39_600 # 11 hours * 60 minutes * 60 seconds
-  @file_num_length 5 # d12345.md
+  # "/Sb/dev_log")
+  @target_from_loc System.get_env("LOG_PATH")
+  # 11 hours * 60 minutes * 60 seconds
+  @syd_shift 39_600
+  # d12345.md
+  @file_num_length 5
 
   @moduledoc """
   Documentation for `NewLog`.
@@ -65,12 +67,12 @@ defmodule NewLog do
     9 => "September",
     10 => "October",
     11 => "November",
-    12 => "December",
+    12 => "December"
   }
 
   def main(args) do
     with {opts, _raw_args, _} <- OptionParser.parse(args, @options),
-         #get date - in UTC, and then offset to SYD TZ.
+         # get date - in UTC, and then offset to SYD TZ.
          datetime <- get_local_time(opts[:date]),
          # This needs an update. This path only works from this specific location,
          # Any other use has a different path to the docs location, so it needs
@@ -79,7 +81,8 @@ defmodule NewLog do
          # When there, then you can use the ls command, just positive.
          #
          # TOP [".DS_Store", "test", "current-week-53", "special", "history"]
-         {:ok, directory_contents} <- navigate_to_path(@target_from_loc),
+         {:ok, directory_contents} <-
+           navigate_to_path(@target_from_loc)
          # {:ok, directory_contents} <- File.ls(@target_from_loc),
          # find current_directory - should only be one.
          current_week_str <- target_current_week(directory_contents),
@@ -99,7 +102,8 @@ defmodule NewLog do
          # construct +next+ log number
          new_log_filename <- new_file_name(newest_file_num) do
       cond do
-        opts[:help] -> render_help_dialog()
+        opts[:help] ->
+          render_help_dialog()
 
         opts[:debug] ->
           if opts[:add] do
@@ -121,13 +125,13 @@ defmodule NewLog do
           # save template to current directory
           |> add_file(new_log_filename, template)
 
-          IO.puts "Adding #{new_log_filename} to #{current_week_str}"
+          IO.puts("Adding #{new_log_filename} to #{current_week_str}")
 
         # This has been updated in Jan 2022 because the late start. Previous years I started back in the first week.
         # Currently this hacks for the start of the year, but it should be updated to handle the discrepancy.
         # It also didn't know to make a year folder, so that needed manual intervention.
-        current_week_num in [0, 1, 2] && (current_week_num + 10) < stale_week_num ->
-          IO.puts "Happy new year!"
+        current_week_num in [0, 1, 2] && current_week_num + 10 < stale_week_num ->
+          IO.puts("Happy new year!")
           # build new year folder
           path(["history", "#{datetime.year}"])
           |> File.mkdir!()
@@ -139,9 +143,10 @@ defmodule NewLog do
           template = template(new_log_filename, datetime, todo_list)
           # save template to new directory
           add_file(new_dir, new_log_filename, template)
-          # Add a new year archive folder
+
+        # Add a new year archive folder
         current_week_num > stale_week_num ->
-          IO.puts "New week! #{format_date(datetime)}"
+          IO.puts("New week! #{format_date(datetime)}")
           {:ok, _f} = archive_week(stale_week_num, current_week_str, datetime, opts)
           # make new 'current' dir for this week
           {:ok, new_dir} = build_new_week_folder(current_week_num)
@@ -149,8 +154,9 @@ defmodule NewLog do
           template = template(new_log_filename, datetime, todo_list)
           # save template to new directory
           add_file(new_dir, new_log_filename, template)
+
         true ->
-          IO.puts "An unknown case occured."
+          IO.puts("An unknown case occured.")
       end
     else
       error -> IO.inspect(error, label: "Error")
@@ -173,30 +179,38 @@ defmodule NewLog do
   def navigate_to_path(path) do
     # rp path: ../../../Documents/sendle/dev_log
     # test path: "priv"
-    [root_dir| _rest] = String.split(path)
+    [root_dir | _rest] = String.split(path)
+
     cond do
-      File.dir?(root_dir) -> File.ls(path)
-      File.dir?("Users") -> # Deepest point
+      File.dir?(root_dir) ->
+        File.ls(path)
+
+      # Deepest point
+      File.dir?("Users") ->
         {:error, "file not found"}
+
       true ->
         File.cd("..")
         navigate_to_path(path)
     end
+
     # TOP [".DS_Store", "test", "current-week-53", "special", "history"]
   end
 
   def get_todos(string_data) do
     string_data
     |> String.split("\n")
-    |> Enum.filter(&(String.match?(&1, ~r/^@ -/))) # get rows with '@ - foo'
-    |> Enum.map(&(String.split(&1, "@ - ", trim: true)))
-    |> List.flatten
+    # get rows with '@ - foo'
+    |> Enum.filter(&String.match?(&1, ~r/^@ -/))
+    |> Enum.map(&String.split(&1, "@ - ", trim: true))
+    |> List.flatten()
   end
 
   def get_file_data(nil, _parent_dir), do: {:ok, ""}
+
   def get_file_data(file_name, parent_dir) do
     path([parent_dir, file_name])
-    |> File.read
+    |> File.read()
   end
 
   def format_date(dt) do
@@ -206,11 +220,13 @@ defmodule NewLog do
   end
 
   def build_archive_folder_path(datetime, week_number) do
-    num = if week_number < 10 do
-            "0#{week_number}"
-          else
-            week_number
-          end
+    num =
+      if week_number < 10 do
+        "0#{week_number}"
+      else
+        week_number
+      end
+
     path(["history", "#{datetime.year}", "week #{num}"])
   end
 
@@ -224,29 +240,31 @@ defmodule NewLog do
   end
 
   def new_file_name(last_num) do
-    new_num = last_num + 1 |> Integer.to_string
+    new_num = (last_num + 1) |> Integer.to_string()
     zero_count = @file_num_length - String.length(new_num)
-    zpad = Enum.map(1..zero_count, fn _ -> "0" end) |> Enum.join
+    zpad = Enum.map(1..zero_count, fn _ -> "0" end) |> Enum.join()
     "d#{zpad}#{new_num}.md"
   end
 
   # only happens when there's no previous week file.
   def get_latest_log_num(nil), do: 100
+
   def get_latest_log_num(dir_name_str) do
     dir_name_str
     |> String.split([".md", "d"], trim: true)
-    |> List.first
-    |> String.to_integer
+    |> List.first()
+    |> String.to_integer()
   end
 
   def get_latest_log_file(dir_name) do
     path(dir_name)
-    |> File.ls!
-    |> Enum.sort
-    |> List.last
+    |> File.ls!()
+    |> Enum.sort()
+    |> List.last()
   end
 
   def delete_stale_current_dir(nil, _opts), do: :ok
+
   def delete_stale_current_dir(dir_name, opts) do
     if opts[:keep] do
       {:ok, "Kept the files, dawg"}
@@ -261,24 +279,27 @@ defmodule NewLog do
   end
 
   def get_local_time(nil) do
-    DateTime.utc_now
+    DateTime.utc_now()
     |> DateTime.add(@syd_shift, :second)
   end
 
   def get_local_time(string_date) do
-    {:ok, datetime_utc, _offset} = "#{string_date}T00:00:00Z"
-                                   |> DateTime.from_iso8601
+    {:ok, datetime_utc, _offset} =
+      "#{string_date}T00:00:00Z"
+      |> DateTime.from_iso8601()
+
     DateTime.add(datetime_utc, @syd_shift, :second)
   end
 
   def target_current_week(contents) do
     contents
     |> Enum.filter(&String.match?(&1, ~r/current-week/))
-    |> Enum.sort
-    |> List.last
+    |> Enum.sort()
+    |> List.last()
   end
 
-  def current_week(time) do # first week is week one
+  # first week is week one
+  def current_week(time) do
     doy = time.calendar.day_of_year(time.year, time.month, time.day)
     dow = time.calendar.day_of_week(time.year, time.month, time.day)
     week_num = div(doy + 6, 7)
@@ -343,6 +364,6 @@ defmodule NewLog do
         -h help:             Render this message.
         -z debug:            Access debug option.
     """
-    |> IO.puts
+    |> IO.puts()
   end
 end

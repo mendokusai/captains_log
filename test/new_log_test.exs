@@ -4,8 +4,8 @@ defmodule NewLog.Test do
 
   test "Prints the help dialog with the --help flag" do
     assert capture_io(fn ->
-      NewLog.main(["--help"])
-    end) =~  "NewLog | ./new_log ~ A daily markdown log file with carry-over todos."
+             NewLog.main(["--help"])
+           end) =~ "NewLog | ./new_log ~ A daily markdown log file with carry-over todos."
 
     refute File.exists?("priv/current-week-02/d01235.md") == true
   end
@@ -48,9 +48,8 @@ defmodule NewLog.Test do
   end
 
   test "local navigation" do
-    assert NewLog.navigate_to_path("Documents/sendle/dev_log") == {:ok,
- [".DS_Store", "test", "special", "history",
-  "current-week-02"]}
+    assert NewLog.navigate_to_path("Sb/dev_log") ==
+             {:ok, [".DS_Store", "test", "special", "history", "current-week-02"]}
 
     on_exit(fn ->
       NewLog.navigate_to_path("Code/elixir/new_log")
@@ -60,9 +59,8 @@ defmodule NewLog.Test do
   test "Destop location" do
     File.cd("../../../Desktop")
 
-    assert NewLog.navigate_to_path("Documents/sendle/dev_log") == {:ok,
- [".DS_Store", "test", "special", "history",
-  "current-week-02"]}
+    assert NewLog.navigate_to_path("Sb/dev_log") ==
+             {:ok, [".DS_Store", "test", "special", "history", "current-week-02"]}
 
     on_exit(fn ->
       NewLog.navigate_to_path("Code/elixir/new_log")

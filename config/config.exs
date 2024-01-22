@@ -1,4 +1,4 @@
-use Mix.Config
+import Config
 
 # Put config here.
-import_config "#{Mix.env}.exs"
+import_config "#{Mix.env()}.exs"
