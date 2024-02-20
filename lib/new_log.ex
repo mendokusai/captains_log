@@ -82,7 +82,7 @@ defmodule NewLog do
          #
          # TOP [".DS_Store", "test", "current-week-53", "special", "history"]
          {:ok, directory_contents} <-
-           navigate_to_path(@target_from_loc)
+           navigate_to_path(@target_from_loc),
          # {:ok, directory_contents} <- File.ls(@target_from_loc),
          # find current_directory - should only be one.
          current_week_str <- target_current_week(directory_contents),
@@ -156,7 +156,7 @@ defmodule NewLog do
           add_file(new_dir, new_log_filename, template)
 
         true ->
-          IO.puts("An unknown case occured.")
+          IO.puts("An unknown case occured. Happy investigating.")
       end
     else
       error -> IO.inspect(error, label: "Error")
@@ -304,9 +304,8 @@ defmodule NewLog do
     dow = time.calendar.day_of_week(time.year, time.month, time.day)
     week_num = div(doy + 6, 7)
 
-    jan1 = get_local_time("2021-01-01")
-    jan1_dow = time.calendar.day_of_week(jan1.year, jan1.month, jan1.day)
-
+    # This is supposed to handle where jan 1 happens mid/late week
+    jan1_dow = time.calendar.day_of_week(time.year, 1, 1)
     if dow < jan1_dow, do: week_num + 1, else: week_num
   end
 
