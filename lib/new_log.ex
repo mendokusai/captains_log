@@ -85,9 +85,11 @@ defmodule NewLog do
            navigate_to_path(@target_from_loc),
          # {:ok, directory_contents} <- File.ls(@target_from_loc),
          # find current_directory - should only be one.
-         current_week_str <- target_current_week(directory_contents),
+         current_week_str <-
+           target_current_week(directory_contents),
          # isolate current_week number from file name.
-         stale_week_num <- get_week_number(current_week_str),
+         stale_week_num <-
+           get_week_number(current_week_str),
          # find current week num from datetime.
          current_week_num <- current_week(datetime),
 
@@ -156,6 +158,13 @@ defmodule NewLog do
           add_file(new_dir, new_log_filename, template)
 
         true ->
+          IO.puts("""
+          directory_contents: #{directory_contents}
+          current_week_num: #{current_week_num}, current_week_str: #{current_week_str}
+          stale_week_num: #{stale_week_num}
+          latest_log_file: #{latest_log_file}
+          """)
+
           IO.puts("An unknown case occured. Happy investigating.")
       end
     else
@@ -300,13 +309,16 @@ defmodule NewLog do
 
   # first week is week one
   def current_week(time) do
-    doy = time.calendar.day_of_year(time.year, time.month, time.day)
-    dow = time.calendar.day_of_week(time.year, time.month, time.day)
-    week_num = div(doy + 6, 7)
-
-    # This is supposed to handle where jan 1 happens mid/late week
-    jan1_dow = time.calendar.day_of_week(time.year, 1, 1)
-    if dow < jan1_dow, do: week_num + 1, else: week_num
+    jan1_date = Date.new!(time.year, 1, 1)
+    jan1_dow = Date.day_of_week(jan1_date)
+    # get the first day of that week.
+    start_of_first_week_date = Date.add(jan1_date, -jan1_dow)
+    # turn current DateTime to Date for comparisons
+    current_date = DateTime.to_date(time)
+    # get diff against first day of the NY start of week
+    days_difference = Date.diff(current_date, start_of_first_week_date)
+    # ensure even week 0 is week 1
+    div(days_difference, 7) + 1
   end
 
   def build_new_week_folder(week_num) do
