@@ -192,7 +192,7 @@ defmodule NewLog do
   end
 
   def navigate_to_path(path) do
-    # rp path: ../../../Documents/sendle/dev_log
+    # rp path: ../../../Documents/dev_log
     # test path: "priv"
     [root_dir | _rest] = String.split(path, "/")
 
