@@ -1,21 +1,21 @@
-defmodule NewLog.Test do
+defmodule CaptainsLog.Test do
   use ExUnit.Case
   import ExUnit.CaptureIO
 
   test "Prints the help dialog with the --help flag" do
     assert capture_io(fn ->
-             NewLog.main(["--help"])
-           end) =~ "NewLog | ./new_log ~ A daily markdown log file with carry-over todos."
+             CaptainsLog.main(["--help"])
+           end) =~ "CaptainsLog | ./captains_log ~ A daily markdown log file with carry-over todos."
   end
 
   test "ensure_required_directories creates missing directories" do
-    test_dir = System.tmp_dir!() |> Path.join("new_log_test_#{:rand.uniform(10000)}")
+    test_dir = System.tmp_dir!() |> Path.join("captains_log_test_#{:rand.uniform(10000)}")
     datetime = ~D[2025-06-28] |> DateTime.new!(~T[12:00:00])
 
     # Create the base directory first
     File.mkdir_p!(test_dir)
 
-    assert {:ok, week_dir_name} = NewLog.ensure_required_directories(test_dir, datetime)
+    assert {:ok, week_dir_name} = CaptainsLog.ensure_required_directories(test_dir, datetime)
 
     assert File.dir?(Path.join(test_dir, "history"))
     assert File.dir?(Path.join([test_dir, "history", "2025"]))
@@ -28,11 +28,11 @@ defmodule NewLog.Test do
   test "current_week calculates correct week number" do
     # Test a date that should be week 2 (January 2025)
     datetime_week2 = ~D[2025-01-05] |> DateTime.new!(~T[12:00:00])
-    assert NewLog.current_week(datetime_week2) == 2
+    assert CaptainsLog.current_week(datetime_week2) == 2
 
     # Test a date in late June (should be around week 26)
     datetime_june = ~D[2025-06-28] |> DateTime.new!(~T[12:00:00])
-    week_num = NewLog.current_week(datetime_june)
+    week_num = CaptainsLog.current_week(datetime_june)
     assert week_num >= 25 and week_num <= 27
   end
 
@@ -47,7 +47,7 @@ defmodule NewLog.Test do
     @ - This should also be extracted
     """
 
-    todos = NewLog.get_todos(log_content)
+    todos = CaptainsLog.get_todos(log_content)
 
     assert "Fix the navigation bug" in todos
     assert "Add new tests" in todos
@@ -56,16 +56,16 @@ defmodule NewLog.Test do
   end
 
   test "get_week_number extracts number from week directory name" do
-    assert NewLog.get_week_number("current-week-05") == 5
-    assert NewLog.get_week_number("current-week-26") == 26
+    assert CaptainsLog.get_week_number("current-week-05") == 5
+    assert CaptainsLog.get_week_number("current-week-26") == 26
   end
 
   test "target_current_week finds current week directory" do
     directory_contents = [".DS_Store", "history", "current-week-26", "special"]
-    assert NewLog.target_current_week(directory_contents) == "current-week-26"
+    assert CaptainsLog.target_current_week(directory_contents) == "current-week-26"
 
     # Multiple week directories - should return the last one
     directory_contents = ["current-week-25", "current-week-26", "history"]
-    assert NewLog.target_current_week(directory_contents) == "current-week-26"
+    assert CaptainsLog.target_current_week(directory_contents) == "current-week-26"
   end
 end

@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-NewLog is an Elixir escript tool for generating daily developer logs in markdown format. It manages weekly log directories and automatically archives old weeks while creating new ones.
+CaptainsLog is an Elixir escript tool for generating daily developer logs in markdown format. It manages weekly log directories and automatically archives old weeks while creating new ones.
 
 ## Core Architecture
 
-### Main Module (`lib/new_log.ex`)
+### Main Module (`lib/captains_log.ex`)
 - **Escript Entry Point**: `main/1` function handles command-line arguments and orchestrates the logging workflow
 - **Weekly Management**: Automatically detects when a new week starts and archives the previous week
 - **Todo Extraction**: Parses existing log files to extract todos (lines starting with `@ -`) and carries them forward
@@ -38,12 +38,12 @@ NewLog is an Elixir escript tool for generating daily developer logs in markdown
 mix escript.build
 
 # Run the built escript
-./new_log
+./captains_log
 
 # Run with options
-./new_log --help
-./new_log --date "2021-01-01"
-./new_log --debug --add
+./captains_log --help
+./captains_log --date "2021-01-01"
+./captains_log --debug --add
 ```
 
 ### Testing
@@ -52,7 +52,7 @@ mix escript.build
 mix test
 
 # Run specific test
-mix test test/new_log_test.exs
+mix test test/captains_log_test.exs
 ```
 
 ### Development
@@ -71,8 +71,10 @@ mix format
 
 Set `LOG_PATH` environment variable to specify the target directory for logs:
 ```bash
-export LOG_PATH="/path/to/your/dev_log"
+export LOG_PATH="Developer/dev_log"
 ```
+
+A template `.envrc.example` file is provided - copy it to `.envrc` and update the path for your system.
 
 ## Command Line Options
 
@@ -86,7 +88,7 @@ export LOG_PATH="/path/to/your/dev_log"
 
 ## Testing Notes
 
-- Tests use the `priv/` directory for test fixtures
-- Tests include cleanup with `on_exit/1` callbacks
-- Navigation tests verify the path resolution logic works from different starting directories
-- Week transition tests verify archiving and new directory creation
+- Tests use temporary directories with automatic cleanup via `on_exit/1` callbacks
+- Core functionality tests verify directory initialization, week calculation, and todo extraction
+- Path resolution and navigation logic is tested through the main workflow functions
+- All tests are isolated and don't interfere with the actual log directory structure

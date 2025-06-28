@@ -20,7 +20,7 @@ erl_crash.dump
 *.ez
 
 # Ignore package tarball (built via "mix hex.build").
-new_log-*.tar
+captains_log-*.tar
 
 
 # Temporary files for e.g. tests
@@ -29,4 +29,4 @@ new_log-*.tar
 # direnv file for envars.
 .envrc
 
-new_log
+captains_log

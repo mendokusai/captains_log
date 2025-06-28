@@ -1,0 +1,11 @@
+# Environment variables for CaptainsLog
+# Copy this file to .envrc and update the path for your system
+
+# Path where daily log files will be created
+# This should be an absolute path or relative to your home directory
+export LOG_PATH="Developer/dev_log"
+
+# Example alternative paths:
+# export LOG_PATH="Documents/daily_logs"
+# export LOG_PATH="/Users/username/workspace/dev_log"
+# export LOG_PATH="~/Documents/development/logs"

@@ -1,3 +1,3 @@
 import Config
 
-config :new_log, NewLog, path: "priv"
+config :captains_log, CaptainsLog, path: "priv"

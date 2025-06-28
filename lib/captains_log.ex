@@ -1,4 +1,4 @@
-defmodule NewLog do
+defmodule CaptainsLog do
   # "/Sb/dev_log")
   @target_from_loc System.get_env("LOG_PATH")
   # 11 hours * 60 minutes * 60 seconds
@@ -7,7 +7,7 @@ defmodule NewLog do
   @file_num_length 5
 
   @moduledoc """
-  Documentation for `NewLog`.
+  Documentation for `CaptainsLog`.
   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   There are three main pathways:
   A. Same week
@@ -395,7 +395,7 @@ defmodule NewLog do
 
   def render_help_dialog do
     """
-      NewLog | ./new_log ~ A daily markdown log file with carry-over todos.
+      CaptainsLog | ./captains_log ~ A daily markdown log file with carry-over todos.
       flags:
         -a add:              Adds a new file.
         -d date:    <string> "2021-01-01" - generate with specific date.

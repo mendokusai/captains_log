@@ -1,13 +1,13 @@
-defmodule NewLog.MixProject do
+defmodule CaptainsLog.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :new_log,
+      app: :captains_log,
       version: "0.1.0",
       elixir: "~> 1.11",
       start_permanent: Mix.env() == :prod,
-      escript: [main_module: NewLog],
+      escript: [main_module: CaptainsLog],
       deps: deps()
     ]
   end
