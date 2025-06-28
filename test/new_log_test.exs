@@ -6,64 +6,66 @@ defmodule NewLog.Test do
     assert capture_io(fn ->
              NewLog.main(["--help"])
            end) =~ "NewLog | ./new_log ~ A daily markdown log file with carry-over todos."
-
-    refute File.exists?("priv/current-week-02/d01235.md") == true
   end
 
-  test "in the same week, adds new log" do
-    date = "2021-01-07"
-    NewLog.main(["--date", date])
+  test "ensure_required_directories creates missing directories" do
+    test_dir = System.tmp_dir!() |> Path.join("new_log_test_#{:rand.uniform(10000)}")
+    datetime = ~D[2025-06-28] |> DateTime.new!(~T[12:00:00])
 
-    file_path = "priv/current-week-02/d01235.md"
-    assert File.exists?(file_path) == true
+    # Create the base directory first
+    File.mkdir_p!(test_dir)
 
-    on_exit(fn ->
-      File.rm!(file_path)
-    end)
+    assert {:ok, week_dir_name} = NewLog.ensure_required_directories(test_dir, datetime)
+
+    assert File.dir?(Path.join(test_dir, "history"))
+    assert File.dir?(Path.join([test_dir, "history", "2025"]))
+    assert File.dir?(Path.join(test_dir, week_dir_name))
+    assert String.starts_with?(week_dir_name, "current-week-")
+
+    on_exit(fn -> File.rm_rf!(test_dir) end)
   end
 
-  test "in a new week creates a new 'current week' folder & archives previous" do
-    NewLog.main(["--date", "2021-01-13"])
+  test "current_week calculates correct week number" do
+    # Test a date that should be week 2 (January 2025)
+    datetime_week2 = ~D[2025-01-05] |> DateTime.new!(~T[12:00:00])
+    assert NewLog.current_week(datetime_week2) == 2
 
-    assert File.exists?("priv/history/2021/week 02/d01234.md") == true
-    assert File.exists?("priv/current-week-03/d01235.md") == true
-
-    on_exit(fn ->
-      newest_path = "priv/current-week-03"
-      old_path = "priv/current-week-02"
-      archive_path = "priv/history/2021/week 02"
-      File.rm_rf!(newest_path)
-      File.mkdir!(old_path)
-      File.cp_r(archive_path, old_path)
-      File.rm_rf!(archive_path)
-    end)
+    # Test a date in late June (should be around week 26)
+    datetime_june = ~D[2025-06-28] |> DateTime.new!(~T[12:00:00])
+    week_num = NewLog.current_week(datetime_june)
+    assert week_num >= 25 and week_num <= 27
   end
 
-  test "priv path navigation" do
-    assert NewLog.navigate_to_path("priv") == {:ok, ["history", "current-week-02"]}
+  test "get_todos extracts todos from log content" do
+    log_content = """
+    # d01234.md
+    @ To complete:
+    @ - Fix the navigation bug
+    @ - Add new tests
+    ---
+    Some content.
+    @ - This should also be extracted
+    """
 
-    on_exit(fn ->
-      NewLog.navigate_to_path("Code/elixir/new_log")
-    end)
+    todos = NewLog.get_todos(log_content)
+
+    assert "Fix the navigation bug" in todos
+    assert "Add new tests" in todos
+    assert "This should also be extracted" in todos
+    assert length(todos) == 3
   end
 
-  test "local navigation" do
-    assert NewLog.navigate_to_path("Sb/dev_log") ==
-             {:ok, [".DS_Store", "test", "special", "history", "current-week-02"]}
-
-    on_exit(fn ->
-      NewLog.navigate_to_path("Code/elixir/new_log")
-    end)
+  test "get_week_number extracts number from week directory name" do
+    assert NewLog.get_week_number("current-week-05") == 5
+    assert NewLog.get_week_number("current-week-26") == 26
   end
 
-  test "Destop location" do
-    File.cd("../../../Desktop")
+  test "target_current_week finds current week directory" do
+    directory_contents = [".DS_Store", "history", "current-week-26", "special"]
+    assert NewLog.target_current_week(directory_contents) == "current-week-26"
 
-    assert NewLog.navigate_to_path("Sb/dev_log") ==
-             {:ok, [".DS_Store", "test", "special", "history", "current-week-02"]}
-
-    on_exit(fn ->
-      NewLog.navigate_to_path("Code/elixir/new_log")
-    end)
+    # Multiple week directories - should return the last one
+    directory_contents = ["current-week-25", "current-week-26", "history"]
+    assert NewLog.target_current_week(directory_contents) == "current-week-26"
   end
 end

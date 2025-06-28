@@ -84,9 +84,15 @@ defmodule NewLog do
          {:ok, directory_contents} <-
            navigate_to_path(@target_from_loc),
          # {:ok, directory_contents} <- File.ls(@target_from_loc),
+         # Ensure required directories exist (history/, history/YYYY/, current-week-NN)
+         {:ok, _ensured_week_dir} <-
+           ensure_required_directories(@target_from_loc, datetime),
+         # Refresh directory contents after ensuring directories exist
+         {:ok, updated_directory_contents} <-
+           File.ls(@target_from_loc),
          # find current_directory - should only be one.
          current_week_str <-
-           target_current_week(directory_contents),
+           target_current_week(updated_directory_contents),
          # isolate current_week number from file name.
          stale_week_num <-
            get_week_number(current_week_str),
@@ -188,7 +194,7 @@ defmodule NewLog do
   def navigate_to_path(path) do
     # rp path: ../../../Documents/sendle/dev_log
     # test path: "priv"
-    [root_dir | _rest] = String.split(path)
+    [root_dir | _rest] = String.split(path, "/")
 
     cond do
       File.dir?(root_dir) ->
@@ -335,6 +341,30 @@ defmodule NewLog do
   def add_new_dir(dir_name) do
     path = path(dir_name)
     if File.exists?(path), do: {:ok, path}, else: {File.mkdir(path), path}
+  end
+
+  def ensure_required_directories(base_path, datetime) do
+    current_week_num = current_week(datetime)
+
+    # Ensure history directory exists
+    history_path = path("history", base_path)
+    unless File.exists?(history_path), do: File.mkdir!(history_path)
+
+    # Ensure current year directory exists in history
+    year_path = path(["history", "#{datetime.year}"], base_path)
+    unless File.exists?(year_path), do: File.mkdir!(year_path)
+
+    # Ensure current week directory exists
+    week_dir_name = if current_week_num < 10 do
+      "current-week-0#{current_week_num}"
+    else
+      "current-week-#{current_week_num}"
+    end
+
+    week_path = path(week_dir_name, base_path)
+    unless File.exists?(week_path), do: File.mkdir!(week_path)
+
+    {:ok, week_dir_name}
   end
 
   def path(path, base \\ @target_from_loc)
