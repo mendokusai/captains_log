@@ -32,8 +32,13 @@ A command-line tool for maintaining daily developer logs in markdown format with
 3. Set up your environment variables:
    ```bash
    cp .envrc.example .envrc
-   # Edit .envrc to set your LOG_PATH
    ```
+
+   **important** Edit .envrc to set your LOG_PATH
+
+   This path needs to exist above the User level*
+   _* This only works for mac for now_
+   OR you can update captaions_log.ex (ln 207)
 
 ## Configuration
 
